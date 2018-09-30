@@ -1,0 +1,13 @@
+/dist
+/logs
+/npm-debug.log
+/node_modules
+.DS_Store
+.idea
+out
+out.code
+proving.key
+variables.inf
+verification.key
+verifier.sol
+witness
