@@ -17,14 +17,13 @@ export default ({ config, db }) => {
          POST /api/export-verifier HTTP/1.1
          Host: 127.0.0.1:8080
          Cache-Control: no-cache
-         Postman-Token: 6d53a504-672d-eb53-0062-83ef50aa0e2b
 
          // only using add, no need to flatten
          def main(a):
-         b = a + 5
-         c = a + b + a + 4
-         d = a + c + a + b
-         return b + c + d
+             b = a + 5
+             c = a + b + a + 4
+             d = a + c + a + b
+             return b + c + d
      */
 
 	// Compile zokrates code into out.code
