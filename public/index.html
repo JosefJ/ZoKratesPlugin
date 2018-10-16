@@ -6,8 +6,14 @@
 </head>
 <body>
 <div>
-    <h2> ZoKrates Code </h2>
     <div class="warning"> This is very early stage PoC, be aware!</div>
+
+    <h2> ZoKrates Code </h2>
+
+    <div>
+        <div>Name: </div>
+    </div>
+    <input id="codeName" type="text">
     <textarea id="code" name="code">
 def main(a):
     b = a + 5
@@ -24,24 +30,8 @@ def main(a):
 </body>
 
 <script src="jquery-3.3.1.min.js"></script>
-<script>
-    $('#comp').click(function() {
-        var code = $('#code').val();
-        $.ajax({
-            type: 'POST',
-            url: '/api/export-verifier',
-            contentType: 'text/html',
-            processData: false,
-            data: code
-        }).done((res) => {
-            console.log(res);
-        });
-    });
-
-
-
-
-</script>
+<script src="remix-api.js"></script>
+<script src="plugin.js"></script>
 
 <style>
     #code {
@@ -51,7 +41,17 @@ def main(a):
 
     .warning {
         width: -webkit-fill-available;
-        background-color: red;
+        background-color: hsla(0, 82%, 82%, .5);
+        border: .2em dotted hsla(0, 82%, 82%, 1);
+        color: hsl(0, 0%, 0%);
+
+        word-wrap: break-word;
+        cursor: pointer;
+        position: relative;
+        margin: 0.5em 0 1em 0;
+        border-radius: 5px;
+        line-height: 20px;
+        padding: 8px 15px;
     }
 </style>
 </html>
