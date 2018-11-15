@@ -1,4 +1,4 @@
-export const zokrates = '~/WebstormProjects/ZoKrates/target/debug/zokrates'
+export const zokrates = '~/zokrates'
 
 export const cmd = {
     COMPILE: 'compile',

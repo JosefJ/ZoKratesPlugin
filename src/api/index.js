@@ -141,7 +141,9 @@ export default ({ config, db }) => {
                     shelljs.exec(zokrates + ' ' + cmd.GENERATEPROOF, (code, stdout, stderr) => {
                         shelljs.exec('mv ./witness ' + path + '/witness');
                         fs.readFile(path + '/witness', (err, succ) => {
+                            console.log(err)
                             res.send(succ.toLocaleString());
+
                             shelljs.exec('rm -rf ' + path);
                         });
                     });

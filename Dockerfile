@@ -1,26 +1,58 @@
-FROM alpine:3.4
+FROM ubuntu:18.04
 
-# File Author / Maintainer
-LABEL authors="Zouhir Chahoud <zouhir@zouhir.org>"
+MAINTAINER JacobEberhardt <jacob.eberhardt@tu-berlin.de>, Dennis Kuhnert <mail@kyroy.com>, Thibaut Schaeffer <thibaut@schaeff.fr>
 
-# Update & install required packages
-RUN apk add --update nodejs bash git
+RUN useradd -u 1000 -m zokrates
 
-# Install app dependencies
-COPY package.json /www/package.json
-RUN cd /www; npm install
+ARG RUST_TOOLCHAIN=nightly-2018-06-04
+ARG LIBSNARK_COMMIT=f7c87b88744ecfd008126d415494d9b34c4c1b20
+ENV LIBSNARK_SOURCE_PATH=/home/zokrates/libsnark-$LIBSNARK_COMMIT
+ENV WITH_LIBSNARK=1
 
-# Copy app source
-COPY . /www
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    build-essential \
+    cmake \
+    curl \
+    libboost-dev \
+    libboost-program-options-dev \
+    libgmp3-dev \
+    libprocps-dev \
+    libssl-dev \
+    pkg-config \
+    python-markdown \
+    git \
+    gnupg2 \
+    && curl -sL https://deb.nodesource.com/setup_11.x | bash - \
+    && apt-get install -y --no-install-recommends \
+    nodejs \
+    && rm -rf /var/lib/apt/lists/* \
+    && git clone https://github.com/scipr-lab/libsnark.git $LIBSNARK_SOURCE_PATH \
+    && git -C $LIBSNARK_SOURCE_PATH checkout $LIBSNARK_COMMIT \
+    && git -C $LIBSNARK_SOURCE_PATH submodule update --init --recursive \
+    && chown -R zokrates:zokrates $LIBSNARK_SOURCE_PATH
+USER zokrates
 
-# Set work directory to /www
-WORKDIR /www
+WORKDIR /home/zokrates
+COPY --chown=zokrates:zokrates . src
 
-# set your port
-ENV PORT 8080
+RUN curl https://sh.rustup.rs -sSf | bash -s -- --default-toolchain $RUST_TOOLCHAIN -y \
+    && export PATH=/home/zokrates/.cargo/bin:$PATH \
+    && git clone https://github.com/Zokrates/ZoKrates \
+    && cd ZoKrates \
+    && ./build_release.sh \
+    && mv ./target/release/zokrates .. \
+    && mv ./zokrates_cli/examples .. \
+    && rustup self uninstall -y \
+    && cd .. \
+    && rm -rf $LIBSNARK_SOURCE_PATH ZoKrates \
+    && cd .. && rm -rf ./ZoKrates
 
-# expose the port to outside world
-EXPOSE  8080
 
-# start command as per package.json
-CMD ["npm", "start"]
+EXPOSE 8080
+
+RUN git clone https://github.com/JosefJ/ZoKratesPlugin \
+    && cd ZoKratesPlugin \
+    && npm install
+
+CMD [npm start]
