@@ -5,12 +5,16 @@
     <title>Title</title>
 </head>
 <body>
-<div>
+<div class="ide">
     <div class="warning"> This is very early stage PoC, be aware!</div>
 
-    <div>
+    <div class="ide-header">
         <div class="fieldName">Name: </div>
         <input id="codeName" type="text" value="verifier.sol">
+        <div class="compileButton" id="comp" type="Submit">
+            <i aria-hidden="true" class="fa fa-refresh icon_d60Wb" title="idle" style="color: rgb(0, 0, 0);"></i>
+            Start to compile
+        </div>
     </div>
     <div>
         <div class="fieldName">Code: </div>
@@ -22,11 +26,17 @@ def main(a):
     return b + c + d
         </textarea>
     </div>
-    <div class="compileButton" id="comp" type="Submit">
-        <i aria-hidden="true" class="fa fa-refresh icon_d60Wb" title="idle" style="color: rgb(0, 0, 0);"></i>
-        Start to compile
+    <div id="compile-error-msg" class="warning">Compile error</div>
+
+</div>
+<div class="footer">
+    <div class="footer-item">
+        <a id="ZKv" href="https://github.com/Zokrates/ZoKrates" target="_blank">ZoKrates 0.0.0</a>
     </div>
-    <div>
+    <div class="footer-item">
+        <a id="ZKPv" href="https://github.com/JosefJ/ZoKratesPlugin" target="_blank">Plugin 0.0.0</a>
+    </div>
+    <div class="footer-item">
         <a href="https://github.com/JosefJ/ZoKratesPlugin/issues/new" target="_blank">report bug</a>
     </div>
 </div>
@@ -39,13 +49,23 @@ def main(a):
 <script src="plugin.js"></script>
 
 <style>
+    html {
+        position: absolute;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+    }
+
     body {
         font: 14px/1.5 Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
-        margin: 5px;
+        margin: 5px 15px;
         padding: 0;
         font-size: 12px;
         color: hsl(0, 0%, 0%);
         font-weight: normal;
+        min-height: 98%;
+        display: flex;
+        flex-direction: column;
     }
     .fieldName {
         margin: 5px 0px;
@@ -53,7 +73,10 @@ def main(a):
 
     #code {
         width: -webkit-fill-available;
-        height: 200px;
+        min-height: 200px;
+        max-width: 99%;
+        max-width: -webkit-fill-available;
+
     }
 
     .warning {
@@ -82,16 +105,31 @@ def main(a):
         cursor: pointer;
         min-height: 25px;
         max-height: 25px;
-        width: 70px;
-        min-width: 70px;
+        width: 120px;
+        min-width: 120px;
         font-size: 12px;
         overflow: hidden;
         word-break: normal;
-        width: 100%;
         margin: 15px 0 10px 0;
         font-size: 12px;
     }
 
+    #compile-error-msg{
+        display: none;
+    }
+
+    .ide {
+        flex: 1 0 auto;
+    }
+    .footer, .push {
+        height: 40px;
+        flex-shrink: 0;
+    }
+
+    .footer-item {
+        margin-right: 20px;
+        display: inline-flex;
+    }
 
 </style>
 </html>

@@ -112,15 +112,19 @@ export default ({ config, db }) => {
 
         fs.writeFile(filePath, req.body,  () => {
             shelljs.exec(zokrates + ' ' + cmd.COMPILE + ' -i ' + filePath, (code, stdout, stderr) => {
-                shelljs.exec(zokrates + ' ' + cmd.SETUP, (code, stdout, stderr) => {
-                    shelljs.exec(zokrates + ' ' + cmd.EXPORTVERIFIER, (code, stdout, stderr) => {
-                        shelljs.exec('mv ./verifier.sol ' + path + '/verifier.sol');
-                        fs.readFile(path + '/verifier.sol', (err, succ) => {
-                            res.send(succ.toLocaleString());
-                            shelljs.exec('rm -rf ' + path);
+                if (stderr != '') {
+                    res.send(stderr);
+                } else {
+                    shelljs.exec(zokrates + ' ' + cmd.SETUP, (code, stdout, stderr) => {
+                        shelljs.exec(zokrates + ' ' + cmd.EXPORTVERIFIER, (code, stdout, stderr) => {
+                            shelljs.exec('mv ./verifier.sol ' + path + '/verifier.sol');
+                            fs.readFile(path + '/verifier.sol', (err, succ) => {
+                                res.send(succ.toLocaleString());
+                                shelljs.exec('rm -rf ' + path);
+                            });
                         });
                     });
-                });
+                }
             });
         });
     });
@@ -141,7 +145,7 @@ export default ({ config, db }) => {
                     shelljs.exec(zokrates + ' ' + cmd.GENERATEPROOF, (code, stdout, stderr) => {
                         shelljs.exec('mv ./witness ' + path + '/witness');
                         fs.readFile(path + '/witness', (err, succ) => {
-                            console.log(err)
+                            console.log(err);
                             res.send(succ.toLocaleString());
 
                             shelljs.exec('rm -rf ' + path);

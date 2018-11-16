@@ -1,6 +1,6 @@
 {
   "name": "zokrates-plugin",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "ZoKrates plugin for Remix",
   "main": "dist",
   "scripts": {
