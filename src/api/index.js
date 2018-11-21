@@ -7,6 +7,42 @@ import fs from 'fs';
 export default ({ config, db }) => {
 	let api = Router();
 
+	// DEFINE A SETUP - TODO: later add to config file
+	let SESSION_ROOT = '/tmp/zokrates/';
+
+    /*
+     *  Helper function for R/W
+     */
+
+    const readFile = (path, opts = 'utf8') =>
+        new Promise((res, rej) => {
+            fs.readFile(path, opts, (err, data) => {
+                if (err) rej(err)
+                else res(data)
+            })
+        });
+
+    const writeFile = (path, data, opts = 'utf8') =>
+        new Promise((res, rej) => {
+            fs.writeFile(path, data, opts, (err) => {
+                if (err) rej(err)
+                else res()
+            })
+        });
+
+    const clearPath = (path) => {
+        if (!fs.existsSync(path)){
+            fs.mkdirSync(path);
+        } else {
+            shelljs.exec('rm -rf ' + path);
+            fs.mkdirSync(path);
+        }
+    };
+
+    const erasePath = (path) => {
+        shelljs.exec('rm -rf ' + path);
+    };
+
     /**
      * The following API enables to send POST requests with a raw body containing the raw ZoKrates code and get regular
      * ZoKrates output back as an asynchronus response
@@ -27,137 +63,185 @@ export default ({ config, db }) => {
      */
 
 	// Compile zokrates code into out.code
-    api.post('/compile', (req, res) => {
-        var path = '/tmp/' + req.headers.session;
+    api.post('/compile', async (req, res) => {
+        var response = {
+            suc: false,
+            out: '',
+            outCode: '',
+            msg: ''
+        };
+
+        var path = SESSION_ROOT + req.headers.session;
         var filePath = path + '/input.code';
+        clearPath(path);
 
-        if (!fs.existsSync(path)){
-            fs.mkdirSync(path);
-        }
-
-        fs.writeFile(filePath, req.body, (suc,err) => {
-            shelljs.exec(zokrates + ' ' + cmd.COMPILE + ' -i ' + filePath, (code, stdout, stderr) => {
-                shelljs.exec('mv ./out.code ' + path + '/out.code');
-                fs.readFile(path + '/out.code', (err, succ) => {
-                    res.send(succ.toLocaleString());
-                    shelljs.exec('rm -rf ' + path);
-                });
-            });
-		});
+        await writeFile(filePath, req.body.code);
+        await shelljs.exec('cd ' + path +' &&' + zokrates + ' ' + cmd.COMPILE + ' -i ' + 'input.code', async (code, stdout, stderr) => {
+            if (stderr != '') {
+                response.msg = stderr;
+                res.json(response);
+                erasePath(path);
+            } else {
+                response.suc = true;
+                response.out = await readFile(path + '/out'); // thse to return data not promise
+                response.outCode = await readFile(path + '/out.code');
+                res.json(response);
+                erasePath(path);
+            };
+        });
     });
 
     // Compute witness with arguments from the request header
-    api.post('/compute-witness', (req, res) => {
-        var path = '/tmp/' + req.headers.session;
-        var filePath = path + '/input.code';
+    api.post('/compute-witness', async (req, res) => {
+        // Response definition
+        var response = {
+            suc: false,
+            out: '',
+            msg: ''
+        };
 
-        if (!fs.existsSync(path)){
-            fs.mkdirSync(path);
-        }
+        // Session specific
+        var path = SESSION_ROOT + req.headers.session;
+        clearPath(path);
 
-        let params = req.query.args;
+        // Task specific variables
+        var outCode = req.body.outCode;
+        var out = req.body.out;
+        var params = req.body.params;
 
-        fs.writeFile(filePath, req.body, () => {
-            shelljs.exec(zokrates + ' ' + cmd.COMPILE + ' -i ' + filePath, (code, stdout, stderr) => {
-                shelljs.exec(zokrates + ' ' + cmd.COMPUTEWITNESS + ' -a ' + params, (code, stdout, stderr) => {
-                    shelljs.exec('mv ./witness ' + path + '/witness');
-                    fs.readFile(path + '/witness', (err, succ) => {
-                        res.send(succ.toLocaleString());
-                        shelljs.exec('rm -rf ' + path);
-                    });
-                });
-            });
+        // Task action
+        await writeFile(path + '/out.code', outCode);
+        await writeFile(path + '/out', out);
+        await shelljs.exec('cd ' + path +' &&' + zokrates + ' ' + cmd.COMPUTEWITNESS + ' -a ' + params, async (code, stdout, stderr) => {
+            if (stderr != '') {
+                response.msg = stderr;
+                res.json(response);
+                erasePath(path);
+            } else {
+                response.witness = await readFile(path + '/witness');
+                response.suc = true;
+                res.json(response);
+                erasePath(path);
+            }
+        });
+    });
+
+    // Setup verification and prover keys
+    api.post('/setup', async (req, res) => {
+        // Response definition
+        var response = {
+            suc: false,
+            verification: '',
+            proving: '',
+            msg: ''
+        };
+
+        // Session specific
+        var path = SESSION_ROOT + req.headers.session;
+        clearPath(path);
+
+        // Task specific variables
+        var outCode = req.body.outCode;
+        var out = req.body.out;
+
+        // Task action
+        await writeFile(path + '/out.code', outCode);
+        await writeFile(path + '/out', out);
+        await shelljs.exec('cd ' + path +' &&' + zokrates + ' ' + cmd.SETUP, async (code, stdout, stderr) => {
+            if (stderr != '') {
+                response.msg = stderr;
+                res.json(response);
+                erasePath(path);
+            } else {
+                response.verification = await readFile(path + '/verification.key');
+                response.proving = await readFile(path + '/proving.key');
+                response.variables = await readFile(path + '/variables.inf');
+                response.suc = true;
+                res.json(response);
+                erasePath(path);
+            }
         });
     });
 
     // Setup verification and proover keys
-    api.post('/setup', (req, res) => {
-        var path = '/tmp/' + req.headers.session;
-        var filePath = path + '/input.code';
+    api.post('/export-verifier', async (req, res) => {
+        // Response definition
+        var response = {
+            suc: false,
+            verifier: '',
+            msg: ''
+        };
 
-        if (!fs.existsSync(path)){
-            fs.mkdirSync(path);
-        }
+        // Session specific
+        var path = SESSION_ROOT + req.headers.session;
+        clearPath(path);
 
-        fs.writeFile(filePath, req.body,  () => {
-            var keys = {};
-            shelljs.exec(zokrates + ' ' + cmd.COMPILE + ' -i ' + filePath, (code, stdout, stderr) => {
-                shelljs.exec(zokrates + ' ' + cmd.SETUP, (code, stdout, stderr) => {
-                    shelljs.exec('mv ./verification.key ' + path + '/verification.key');
-                    shelljs.exec('mv ./proving.key ' + path + '/proving.key');
-                    fs.readFile(path + '/verification.key', (err, succ) => {
-                        keys.verification = succ.toLocaleString();
-                        fs.readFile(path + '/proving.key', (err, succ) => {
-                            keys.proving = succ.toLocaleString();
-                            res.json(keys);
-                            shelljs.exec('rm -rf ' + path);
-                        });
-                    });
-                });
-            });
-        });
-    });
+        // Task specific variables
+        var outCode = req.body.outCode;
+        var out = req.body.out;
+        var verification = req.body.verification;
 
-    // Export verifier in solidity code
-    // TODO: if verifier key sent as an argument, don't generate new pair
-    api.post('/export-verifier', (req, res) => {
-        var path = '/tmp/' + req.headers.session;
-        var filePath = path + '/input.code';
+        // Task action
+        await writeFile(path + '/out.code', outCode);
+        await writeFile(path + '/out', out);
+        await writeFile(path + '/verification.key', verification);
 
-        if (!fs.existsSync(path)){
-            fs.mkdirSync(path);
-        }
-
-        console.log(req.body);
-
-        fs.writeFile(filePath, req.body,  () => {
-            shelljs.exec(zokrates + ' ' + cmd.COMPILE + ' -i ' + filePath, (code, stdout, stderr) => {
-                if (stderr != '') {
-                    res.send(stderr);
-                } else {
-                    shelljs.exec(zokrates + ' ' + cmd.SETUP, (code, stdout, stderr) => {
-                        shelljs.exec(zokrates + ' ' + cmd.EXPORTVERIFIER, (code, stdout, stderr) => {
-                            shelljs.exec('mv ./verifier.sol ' + path + '/verifier.sol');
-                            fs.readFile(path + '/verifier.sol', (err, succ) => {
-                                res.send(succ.toLocaleString());
-                                shelljs.exec('rm -rf ' + path);
-                            });
-                        });
-                    });
-                }
-            });
+        await shelljs.exec('cd ' + path +' &&' + zokrates + ' ' + cmd.EXPORTVERIFIER, async (code, stdout, stderr) => {
+            if (stderr != '') {
+                response.msg = stderr;
+                res.json(response);
+                erasePath(path);
+            } else {
+                response.verifier = await readFile(path + '/verifier.sol');
+                response.suc = true;
+                res.json(response);
+                erasePath(path);
+            }
         });
     });
 
     // Generate proof
-    // TODO: if prover key send as an argument, don't generate new pair
-    api.post('/generate-proof', (req, res) => {
-        var path = '/tmp/' + req.headers.session;
-        var filePath = path + '/input.code';
+    // Setup verification and proover keys
+    api.post('/generate-proof', async (req, res) => {
+        // Response definition
+        var response = {
+            suc: false,
+            proof: '',
+            msg: ''
+        };
 
-        if (!fs.existsSync(path)){
-            fs.mkdirSync(path);
-        }
+        // Session specific
+        var path = SESSION_ROOT + req.headers.session;
+        clearPath(path);
 
-        fs.writeFile(filePath, req.body,  () => {
-            shelljs.exec(zokrates + ' ' + cmd.COMPILE + ' -i ' + filePath, (code, stdout, stderr) => {
-                shelljs.exec(zokrates + ' ' + cmd.SETUP, (code, stdout, stderr) => {
-                    shelljs.exec(zokrates + ' ' + cmd.GENERATEPROOF, (code, stdout, stderr) => {
-                        shelljs.exec('mv ./witness ' + path + '/witness');
-                        fs.readFile(path + '/witness', (err, succ) => {
-                            console.log(err);
-                            res.send(succ.toLocaleString());
+        // Task specific variables
+        var outCode = req.body.outCode;
+        var out = req.body.out;
+        var proving = req.body.proving;
+        var witness = req.body.witness;
 
-                            shelljs.exec('rm -rf ' + path);
-                        });
-                    });
-                });
-            });
+        // Task action
+        await writeFile(path + '/out.code', outCode);
+        await writeFile(path + '/out', out);
+        await writeFile(path + '/proving.key', proving);
+        await writeFile(path + '/witness', witness);
+
+        await shelljs.exec('cd ' + path +' &&' + zokrates + ' ' + cmd.GENERATEPROOF, async (code, stdout, stderr) => {
+            if (stderr != '') {
+                response.msg = stderr;
+                res.json(response);
+                //erasePath(path);
+            } else {
+                response.proof = await readFile(path + '/witness');
+                response.suc = true;
+                res.json(response);
+                //erasePath(path);
+            }
         });
     });
 
     // Returns Zokrates version
-    api.get('/version', (req, res) => {
+    api.get('/version', async (req, res) => {
         var version = shelljs.exec(zokrates + ' ' + cmd.VERSION).stdout;
         res.send(version.toLocaleString());
     });
@@ -167,6 +251,10 @@ export default ({ config, db }) => {
 		res.json({ version });
 	});
 
+	// Just a testing space
+    api.get('/test', async (req, res) => {
+        res.send('test');
+    });
 
 	return api;
 }
