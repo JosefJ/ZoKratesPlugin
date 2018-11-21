@@ -1,6 +1,8 @@
 FROM ubuntu:18.04
 
-MAINTAINER JacobEberhardt <jacob.eberhardt@tu-berlin.de>, Dennis Kuhnert <mail@kyroy.com>, Thibaut Schaeffer <thibaut@schaeff.fr>
+# This dockerfile is a fork of the orignal ZoKrates dockerfile: https://github.com/Zokrates/ZoKrates/blob/develop/Dockerfile
+# Orginal MAINTAINER JacobEberhardt <jacob.eberhardt@tu-berlin.de>, Dennis Kuhnert <mail@kyroy.com>, Thibaut Schaeffer <thibaut@schaeff.fr>
+MAINTAINER Josef Jelacic <josef@polynom.com>
 
 RUN useradd -u 1000 -m zokrates
 
@@ -8,6 +10,7 @@ ARG RUST_TOOLCHAIN=nightly-2018-06-04
 ARG LIBSNARK_COMMIT=f7c87b88744ecfd008126d415494d9b34c4c1b20
 ENV LIBSNARK_SOURCE_PATH=/home/zokrates/libsnark-$LIBSNARK_COMMIT
 ENV WITH_LIBSNARK=1
+ENV SESSION_ROOT = /tmp/zokrates
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -30,9 +33,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && git clone https://github.com/scipr-lab/libsnark.git $LIBSNARK_SOURCE_PATH \
     && git -C $LIBSNARK_SOURCE_PATH checkout $LIBSNARK_COMMIT \
     && git -C $LIBSNARK_SOURCE_PATH submodule update --init --recursive \
-    && chown -R zokrates:zokrates $LIBSNARK_SOURCE_PATH
-USER zokrates
+    && chown -R zokrates:zokrates $LIBSNARK_SOURCE_PATH \
+    && mkdir $SESSION_ROOT \
+    && chown -R zokrates:zokrates $SESSION_ROOT
 
+USER zokrates
 WORKDIR /home/zokrates
 COPY --chown=zokrates:zokrates . src
 
