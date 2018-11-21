@@ -1,6 +1,6 @@
 {
   "name": "zokrates-plugin",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "ZoKrates plugin for Remix",
   "main": "dist",
   "scripts": {
@@ -35,7 +35,7 @@
     "compression": "^1.5.2",
     "cors": "^2.7.1",
     "express": "^4.13.3",
-    "morgan": "^1.8.0",
+    "morgan": "^1.9.1",
     "resource-router-middleware": "^0.6.0",
     "shelljs": "^0.8.2"
   },

@@ -5,30 +5,58 @@
     <title>Title</title>
 </head>
 <body>
-<div class="ide">
-    <div class="warning"> This is very early stage PoC, be aware!</div>
+<div id="wrapper">
+    <div class="msg warning"> This is very early stage MVP, be aware!</div>
+    <ul id="nav">
+        <li class="nav-item active"> <a>Develop</a> </li>
+        <li class="nav-item"> <a>Prove</a> </li>
+    </ul>
 
-    <div class="ide-header">
-        <div class="fieldName">Name: </div>
-        <input id="codeName" type="text" value="verifier.sol">
-        <div class="compileButton" id="comp" type="Submit">
-            <i aria-hidden="true" class="fa fa-refresh icon_d60Wb" title="idle" style="color: rgb(0, 0, 0);"></i>
-            Start to compile
-        </div>
-    </div>
-    <div>
-        <div class="fieldName">Code: </div>
-        <textarea id="code" name="code">
-def main(a):
-    b = a + 5
-    c = a + b + a + 4
-    d = a + c + a + b
-    return b + c + d
-        </textarea>
-    </div>
-    <div id="compile-error-msg" class="warning">Compile error</div>
+    <ul id="tabs">
+        <li class="tab-item">
+            <div id="develope" class="tab">
 
+                <!-- TODO: <div class="ide-header"> </div>-->
+                <!-- TODO: Upload code from local storage -->
+
+                <div>
+                    <div class="fieldName">Code: </div>
+                    <textarea id="code" class="input-area" name="code">
+def main(field a, field b, field c) -> (field):
+  return a + b + c
+                    </textarea>
+                    <div id="output-develop" class="msg error">Compile error</div>
+                    <button id="btn-compile" class="button"> Start to compile </button>
+                    <button id="btn-setup" class="button"> Generate keys </button>
+                </div>
+            </div>
+        </li>
+        <li class="tab-item">
+            <div id="prove" class="tab">
+
+                <!-- TODO: <div class="witness-header"> </div>-->
+                <!-- TODO: Upload outputed code from local storage -->
+
+                <div class="fieldName">Inputs: </div>
+                <textarea id="arguments" class="input-area" name="arguments">
+1
+2
+3
+                </textarea>
+                <div class="hint"> Hint: one input per line; no explicit line-breaks </div>
+
+                <div id="output-prove" class="msg warning">
+                    Compiled code not found, please repeat the previous step!
+                </div>
+
+                <button id="btn-witness" class="button"> Generate witness </button>
+                <button id="btn-verifier" class="button"> Export verifier </button>
+                <button id="btn-proof" class="button"> Generate proof </button>
+            </div>
+        </li>
+    </ul>
 </div>
+
 <div class="footer">
     <div class="footer-item">
         <a id="ZKv" href="https://github.com/Zokrates/ZoKrates" target="_blank">ZoKrates 0.0.0</a>
@@ -67,24 +95,36 @@ def main(a):
         display: flex;
         flex-direction: column;
     }
+
+    #nav, #tabs {
+        padding: 0px;
+    }
+
+    .nav-item {
+        display: inline-block;
+        cursor: pointer;
+        margin: 0.5em 0 1em 0;
+        border-radius: 5px;
+        line-height: 20px;
+        padding: 8px 15px;
+    }
+
+    .active {
+        font-weight: 777;
+        background-color: hsla(229, 100%, 97%, 1)
+    }
+
+    .tab-item {
+        display: none;
+        list-style-type:none;
+    }
+
     .fieldName {
         margin: 5px 0px;
     }
 
-    #code {
+    .msg {
         width: -webkit-fill-available;
-        min-height: 200px;
-        max-width: 99%;
-        max-width: -webkit-fill-available;
-
-    }
-
-    .warning {
-        width: -webkit-fill-available;
-        background-color: hsla(0, 82%, 82%, .5);
-        border: .2em dashed hsla(0, 82%, 82%, 1);
-        color: hsl(0, 0%, 0%);
-
         word-wrap: break-word;
         cursor: pointer;
         position: relative;
@@ -94,7 +134,24 @@ def main(a):
         padding: 8px 15px;
     }
 
-    .compileButton{
+    .error {
+        background-color: hsla(0, 82%, 82%, .5);
+        border: .2em dashed hsla(0, 82%, 82%, 1);
+        color: hsl(0, 0%, 0%);
+    }
+
+    .warning {
+        background-color: hsla(44, 100%, 50%, .5);
+        color: hsl(0, 0%, 0%);
+    }
+
+    .success {
+        background-color: hsla(141, 75%, 84%, .5);
+        border: .2em dotted hsla(141, 75%, 84%, 1);
+        color: hsl(0, 0%, 0%);
+    }
+
+    .button{
         background-color: hsla(229, 75%, 87%, .5);
         border: .3px solid hsla(229, 75%, 87%, .5);
         color: hsl(0, 0%, 0%);
@@ -114,13 +171,10 @@ def main(a):
         font-size: 12px;
     }
 
-    #compile-error-msg{
-        display: none;
-    }
-
-    .ide {
+    #wrapper {
         flex: 1 0 auto;
     }
+
     .footer, .push {
         height: 40px;
         flex-shrink: 0;
@@ -131,5 +185,25 @@ def main(a):
         display: inline-flex;
     }
 
+    .input-area {
+        width: -webkit-fill-available;
+        min-height: 200px;
+        max-width: 99%;
+        max-width: -webkit-fill-available;
+    }
+
+    #prove .input-area {
+          min-height: 100px;
+      }
+
+    #output-develop, #output-prove{
+        display: none;
+    }
 </style>
 </html>
+
+
+<!--
+<div class="fieldName">Name: </div>
+<input id="codeName" type="text" value="verifier.sol">
+-->

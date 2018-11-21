@@ -19,17 +19,16 @@ app.use(morgan('dev'));
 app.use(cors({
 	exposedHeaders: config.corsHeaders
 }));
+app.use(bodyParser.text());
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({
-	extended: false
+	extended: true
 }));
 
-// app.use(bodyParser.json({
-// 	limit : config.bodyLimit
-// }));
+app.use(bodyParser.json());
 
-app.use(bodyParser.text());
+
 
 // connect to db
 initializeDb( db => {
@@ -44,7 +43,6 @@ initializeDb( db => {
 
 	// api router
 	app.use('/api', api({ config, db }));
-
 
 
 	app.server.listen(process.env.PORT || config.port, () => {
