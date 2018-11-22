@@ -22,7 +22,23 @@ export default ({ config, db }) => {
             })
         });
 
+    const readKey = (path, opts = 'base64') =>
+        new Promise((res, rej) => {
+            fs.readFile(path, opts, (err, data) => {
+                if (err) rej(err)
+                else res(data)
+            })
+        });
+
     const writeFile = (path, data, opts = 'utf8') =>
+        new Promise((res, rej) => {
+            fs.writeFile(path, data, opts, (err) => {
+                if (err) rej(err)
+                else res()
+            })
+        });
+
+    const writeKey = (path, data, opts = 'base64') =>
         new Promise((res, rej) => {
             fs.writeFile(path, data, opts, (err) => {
                 if (err) rej(err)
@@ -76,7 +92,7 @@ export default ({ config, db }) => {
         clearPath(path);
 
         await writeFile(filePath, req.body.code);
-        await shelljs.exec('cd ' + path +' &&' + zokrates + ' ' + cmd.COMPILE + ' -i ' + 'input.code', async (code, stdout, stderr) => {
+        await shelljs.exec('cd ' + path +' && ' + zokrates + ' ' + cmd.COMPILE + ' -i ' + 'input.code', async (code, stdout, stderr) => {
             if (stderr != '') {
                 response.msg = stderr;
                 res.json(response);
@@ -108,10 +124,12 @@ export default ({ config, db }) => {
         var outCode = req.body.outCode;
         var out = req.body.out;
         var params = req.body.params;
+        console.log(params);
 
         // Task action
         await writeFile(path + '/out.code', outCode);
         await writeFile(path + '/out', out);
+        console.log('cd ' + path +' && ' + zokrates + ' ' + cmd.COMPUTEWITNESS + ' -a ' + params);
         await shelljs.exec('cd ' + path +' &&' + zokrates + ' ' + cmd.COMPUTEWITNESS + ' -a ' + params, async (code, stdout, stderr) => {
             if (stderr != '') {
                 response.msg = stderr;
@@ -147,15 +165,16 @@ export default ({ config, db }) => {
         // Task action
         await writeFile(path + '/out.code', outCode);
         await writeFile(path + '/out', out);
-        await shelljs.exec('cd ' + path +' &&' + zokrates + ' ' + cmd.SETUP, async (code, stdout, stderr) => {
+
+        await shelljs.exec('cd ' + path +' && ' + zokrates + ' ' + cmd.SETUP, async (code, stdout, stderr) => {
             if (stderr != '') {
                 response.msg = stderr;
                 res.json(response);
                 erasePath(path);
             } else {
                 response.verification = await readFile(path + '/verification.key');
-                response.proving = await readFile(path + '/proving.key');
                 response.variables = await readFile(path + '/variables.inf');
+                response.proving = await readKey(path + '/proving.key');
                 response.suc = true;
                 res.json(response);
                 erasePath(path);
@@ -186,7 +205,7 @@ export default ({ config, db }) => {
         await writeFile(path + '/out', out);
         await writeFile(path + '/verification.key', verification);
 
-        await shelljs.exec('cd ' + path +' &&' + zokrates + ' ' + cmd.EXPORTVERIFIER, async (code, stdout, stderr) => {
+        await shelljs.exec('cd ' + path +' && ' + zokrates + ' ' + cmd.EXPORTVERIFIER, async (code, stdout, stderr) => {
             if (stderr != '') {
                 response.msg = stderr;
                 res.json(response);
@@ -219,23 +238,25 @@ export default ({ config, db }) => {
         var out = req.body.out;
         var proving = req.body.proving;
         var witness = req.body.witness;
+        var variables = req.body.variables;
 
         // Task action
         await writeFile(path + '/out.code', outCode);
         await writeFile(path + '/out', out);
-        await writeFile(path + '/proving.key', proving);
         await writeFile(path + '/witness', witness);
+        await writeFile(path + '/variables.inf', variables);
+        await writeKey(path + '/proving.key', proving);
 
-        await shelljs.exec('cd ' + path +' &&' + zokrates + ' ' + cmd.GENERATEPROOF, async (code, stdout, stderr) => {
+        await shelljs.exec('cd ' + path +' && ' + zokrates + ' ' + cmd.GENERATEPROOF, async (code, stdout, stderr) => {
             if (stderr != '') {
                 response.msg = stderr;
                 res.json(response);
-                //erasePath(path);
+                // erasePath(path);
             } else {
-                response.proof = await readFile(path + '/witness');
+                response.proof = await readFile(path + '/proof.json');
                 response.suc = true;
                 res.json(response);
-                //erasePath(path);
+                // erasePath(path);
             }
         });
     });

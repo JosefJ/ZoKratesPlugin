@@ -29,6 +29,8 @@ def main(field a, field b, field c) -> (field):
                     <button id="btn-compile" class="button"> Start to compile </button>
                     <button id="btn-setup" class="button"> Generate keys </button>
                 </div>
+                <!-- TODO: This is just a stupid fix of an encoding issue, TO BE REMOVED asap-->
+                <div id="pkey"></div>
             </div>
         </li>
         <li class="tab-item">
@@ -199,11 +201,10 @@ def main(field a, field b, field c) -> (field):
     #output-develop, #output-prove{
         display: none;
     }
+
+    /* TODO: This is just a stupid fix of an encoding issue, TO BE REMOVED asap*/
+    #pkey {
+        display: none;
+    }
 </style>
 </html>
-
-
-<!--
-<div class="fieldName">Name: </div>
-<input id="codeName" type="text" value="verifier.sol">
--->
